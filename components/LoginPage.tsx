@@ -10,6 +10,8 @@ const validCredentials = [
   { username: 'Ulismeong', password: 'Baronang090925*' },
   { username: 'yudhistira.an', password: 'Bismillah.11' },
   { username: 'bintoro', password: 'AutocadGAS_2025' },
+  { username: 'rida.hai', password: 'tanyasiapa?' },
+  { username: 'Vica.na', password: 'Agust2025++*' },
 ];
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
