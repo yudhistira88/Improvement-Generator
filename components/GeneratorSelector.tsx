@@ -39,10 +39,10 @@ const colorClasses = {
 
 const GeneratorSelector: React.FC<GeneratorSelectorProps> = ({ onSelectGenerator }) => {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center p-4 pt-16">
             <div className="text-center mb-10">
-                <h1 className="text-4xl font-bold text-gray-800">Improvement Generator</h1>
-                <p className="mt-2 text-lg text-gray-600">Pilih jenis improvement yang ingin Kamu buat.</p>
+                <h1 className="text-3xl font-bold text-gray-800">Selamat Datang</h1>
+                <p className="mt-2 text-lg text-gray-600">Pilih jenis improvement yang ingin Anda buat.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl w-full">
                 {generatorOptions.map(option => {
@@ -65,9 +65,6 @@ const GeneratorSelector: React.FC<GeneratorSelectorProps> = ({ onSelectGenerator
                     )
                 })}
             </div>
-             <footer className="text-center py-8 text-sm text-gray-500 mt-10">
-                <p>© GAS Department, 2025.</p>
-            </footer>
         </div>
     );
 };
