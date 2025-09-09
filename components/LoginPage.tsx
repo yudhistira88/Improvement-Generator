@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { SparklesIcon } from './icons';
 
@@ -12,6 +13,10 @@ const validCredentials = [
   { username: 'bintoro', password: 'AutocadGAS_2025' },
   { username: 'rida.hai', password: 'tanyasiapa?' },
   { username: 'Vica.na', password: 'Agust2025++*' },
+  { username: 'surya.am', password: 'WeakHero2025*' },
+  { username: 'Dwi.pa', password: 'Agustus142++' },
+  { username: 'anita.he', password: 'Agustus2025++' },
+  { username: 'Retno.dw', password: 'Bagas2025@' },
 ];
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
