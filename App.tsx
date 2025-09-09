@@ -7,12 +7,26 @@ import ReportDisplay from './components/ReportDisplay';
 import { SparklesIcon } from './components/icons';
 import Flowchart from './components/Flowchart';
 import GeneratorSelector from './components/GeneratorSelector';
+import LoginPage from './components/LoginPage';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [generatorType, setGeneratorType] = useState<GeneratorType | null>(null);
   const [reportData, setReportData] = useState<AnyReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setGeneratorType(null);
+    setReportData(null);
+    setError(null);
+    setIsLoading(false);
+  };
 
   const handleGenerateReport = useCallback(async (params: ReportGenerationParams) => {
     if (!generatorType) return;
@@ -43,13 +57,17 @@ const App: React.FC = () => {
     setIsLoading(false);
   }
 
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   if (!generatorType) {
     return <GeneratorSelector onSelectGenerator={setGeneratorType} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-      <Header generatorType={generatorType} onBack={handleBackToSelection} />
+      <Header generatorType={generatorType} onBack={handleBackToSelection} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <Flowchart generatorType={generatorType}/>
         <div className="mt-8">
