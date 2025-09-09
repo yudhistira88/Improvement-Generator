@@ -13,7 +13,6 @@ const App: React.FC = () => {
   const [reportData, setReportData] = useState<AnyReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const handleGenerateReport = useCallback(async (params: ReportGenerationParams) => {
     if (!generatorType) return;
@@ -21,7 +20,6 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setReportData(null);
-    setIsEditing(false);
 
     try {
       const report = await generateReport(generatorType, params);
@@ -43,13 +41,6 @@ const App: React.FC = () => {
     setReportData(null);
     setError(null);
     setIsLoading(false);
-  }
-
-  const handleToggleEdit = () => {
-    // Editing is currently only enabled for QCC
-    if (generatorType === 'QCC') {
-       setIsEditing(prev => !prev);
-    }
   }
 
   if (!generatorType) {
@@ -84,9 +75,6 @@ const App: React.FC = () => {
           <div className="mt-8">
             <ReportDisplay 
               report={reportData} 
-              generatorType={generatorType}
-              isEditing={isEditing}
-              onToggleEdit={handleToggleEdit}
               onUpdateReport={handleReportUpdate}
             />
           </div>

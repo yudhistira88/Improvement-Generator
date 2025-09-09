@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { AnyReport, GeneratorType, IPReport, QCCReport } from '../types';
-import { exportToPDF, exportToPPTX, exportIPToPDF, exportIPToWord } from '../services/exportService';
+import { exportToPDF, exportQCCToWord, exportIPToPDF, exportIPToWord } from '../services/exportService';
 import StepCard from './StepCard';
 import { QCC_STEPS, IP_STEPS } from '../constants';
 import BeforeAfterChart from './charts/BeforeAfterChart';
-import FishboneDiagram from './charts/FishboneDiagram';
 import GanttChartDisplay from './charts/GanttChartDisplay';
-import { PdfIcon, PptIcon, EditIcon, SaveIcon, WordIcon, CameraIcon } from './icons';
+import { PdfIcon, EditIcon, SaveIcon, WordIcon, CameraIcon } from './icons';
 import html2canvas from 'html2canvas';
 
 interface ReportDisplayProps {
   report: AnyReport;
-  generatorType: GeneratorType;
-  isEditing: boolean;
-  onToggleEdit: () => void;
   onUpdateReport: (report: AnyReport) => void;
 }
 
@@ -30,10 +26,6 @@ const EditableText = ({ value, onChange, isEditing, isTextarea = false, classNam
     return <p className={`text-gray-700 mt-1 ${className}`}>{value}</p>;
 };
 
-const InfoItem = ({ label, value }) => (
-    value ? <p><strong>{label}:</strong> {value}</p> : null
-);
-
 const Section = ({ title, children, className = '' }) => (
     <div className={className}>
         <h4 className="font-semibold text-lg text-gray-800">{title}</h4>
@@ -41,102 +33,171 @@ const Section = ({ title, children, className = '' }) => (
     </div>
 );
 
-const QCCReportView: React.FC<{report: QCCReport, isEditing: boolean, handleFieldChange: Function}> = ({ report, isEditing, handleFieldChange }) => {
+const QCCReportView: React.FC<{report: QCCReport, onUpdateReport: (report: QCCReport) => void}> = ({ report, onUpdateReport }) => {
+    const [isLangkah1Editing, setIsLangkah1Editing] = useState(false);
+    const [isLangkah2Editing, setIsLangkah2Editing] = useState(false);
+    const [isLangkah3Editing, setIsLangkah3Editing] = useState(false);
+    const [isLangkah4Editing, setIsLangkah4Editing] = useState(false);
+    const [isLangkah5Editing, setIsLangkah5Editing] = useState(false);
+    const [isLangkah6Editing, setIsLangkah6Editing] = useState(false);
+    const [isLangkah7Editing, setIsLangkah7Editing] = useState(false);
+    const [isLangkah8Editing, setIsLangkah8Editing] = useState(false);
+    
     const commonInputClass = "w-full p-1 bg-gray-50 border border-gray-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200";
+
+    const handleScreenshot = (elementId: string, filename: string) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${filename}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    };
+    
+    const handleFieldChange = (path: (string|number)[], value: any) => {
+        const newReport = JSON.parse(JSON.stringify(report));
+        let current = newReport;
+        for (let i = 0; i < path.length - 1; i++) {
+            current = current[path[i]];
+        }
+        current[path[path.length - 1]] = value;
+        onUpdateReport(newReport);
+    };
+    
+    const ActionButtons = ({ onEdit, isEditing, screenshotId, screenshotName }) => (
+        <>
+            <button onClick={onEdit} className="p-1.5 rounded-md hover:bg-gray-200 transition text-gray-500" title={isEditing ? "Simpan" : "Ubah"}>
+                {isEditing ? <SaveIcon className="w-5 h-5"/> : <EditIcon className="w-5 h-5"/>}
+            </button>
+            <button onClick={() => handleScreenshot(screenshotId, screenshotName)} className="p-1.5 rounded-md hover:bg-gray-200 transition text-gray-500" title="Screenshot Bagian Ini">
+                <CameraIcon className="w-5 h-5"/>
+            </button>
+        </>
+    );
     
     return (
         <>
-            <StepCard title={QCC_STEPS[0]}>
+            <StepCard title={QCC_STEPS[0]} actions={<ActionButtons onEdit={() => setIsLangkah1Editing(!isLangkah1Editing)} isEditing={isLangkah1Editing} screenshotId="qcc-step1-export" screenshotName="Langkah1_Tema" />}>
+              <div id="qcc-step1-export" className="p-2 bg-white">
                 <h4 className="font-semibold text-lg text-gray-800">Latar Belakang</h4>
-                <EditableText value={report.langkah1.latarBelakang} onChange={e => handleFieldChange(['langkah1', 'latarBelakang'], e.target.value)} isEditing={isEditing} isTextarea />
+                <EditableText value={report.langkah1.latarBelakang} onChange={e => handleFieldChange(['langkah1', 'latarBelakang'], e.target.value)} isEditing={isLangkah1Editing} isTextarea />
                 <h4 className="font-semibold text-lg text-gray-800 mt-4">Kondisi Awal</h4>
-                <EditableText value={report.langkah1.kondisiAwal} onChange={e => handleFieldChange(['langkah1', 'kondisiAwal'], e.target.value)} isEditing={isEditing} isTextarea />
+                <EditableText value={report.langkah1.kondisiAwal} onChange={e => handleFieldChange(['langkah1', 'kondisiAwal'], e.target.value)} isEditing={isLangkah1Editing} isTextarea />
+              </div>
             </StepCard>
 
-            <StepCard title={QCC_STEPS[1]}>
+            <StepCard title={QCC_STEPS[1]} actions={<ActionButtons onEdit={() => setIsLangkah2Editing(!isLangkah2Editing)} isEditing={isLangkah2Editing} screenshotId="qcc-step2-export" screenshotName="Langkah2_Target" />}>
+              <div id="qcc-step2-export" className="p-2 bg-white">
                 <h4 className="font-semibold text-lg text-gray-800">Target Kuantitatif</h4>
                 <table className="mt-2 w-full text-left">
                     <thead className="border-b border-gray-200"><tr className="text-sm text-gray-600 uppercase"><th className="p-2 font-semibold">Metrik</th><th className="p-2 font-semibold">Baseline</th><th className="p-2 font-semibold">Target</th></tr></thead>
                     <tbody>
                         {report.langkah2.targetKuantitatif.map((t, i) => (
                             <tr key={i} className="border-b border-gray-100">
-                                <td className="p-2">{isEditing ? <input value={t.metrik} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'metrik'], e.target.value)} className={commonInputClass}/> : t.metrik}</td>
-                                <td className="p-2">{isEditing ? <input value={t.baseline} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'baseline'], e.target.value)} className={commonInputClass}/> : t.baseline}</td>
-                                <td className="p-2">{isEditing ? <input value={t.target} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'target'], e.target.value)} className={commonInputClass}/> : t.target}</td>
+                                <td className="p-2">{isLangkah2Editing ? <input value={t.metrik} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'metrik'], e.target.value)} className={commonInputClass}/> : t.metrik}</td>
+                                <td className="p-2">{isLangkah2Editing ? <input value={t.baseline} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'baseline'], e.target.value)} className={commonInputClass}/> : t.baseline}</td>
+                                <td className="p-2">{isLangkah2Editing ? <input value={t.target} onChange={e => handleFieldChange(['langkah2', 'targetKuantitatif', i, 'target'], e.target.value)} className={commonInputClass}/> : t.target}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 <h4 className="font-semibold text-lg text-gray-800 mt-4">Target Kualitatif</h4>
                 <ul className="list-disc list-inside text-gray-700 mt-1">
-                    {report.langkah2.targetKualitatif.map((t, i) => <li key={i}>{isEditing ? <input value={t} onChange={e => handleFieldChange(['langkah2', 'targetKualitatif', i], e.target.value)} className={commonInputClass}/> : t}</li>)}
+                    {report.langkah2.targetKualitatif.map((t, i) => <li key={i}>{isLangkah2Editing ? <input value={t} onChange={e => handleFieldChange(['langkah2', 'targetKualitatif', i], e.target.value)} className={commonInputClass}/> : t}</li>)}
                 </ul>
+              </div>
             </StepCard>
             
-            <StepCard title={QCC_STEPS[2]}>
-                <div id="fishbone-diagram-export"><FishboneDiagram data={report.langkah3.fishbone} /></div>
-                <h4 className="font-semibold text-lg text-gray-800 mt-6">Analisis 5 Why</h4>
-                <div className="space-y-2 mt-2">
-                    {report.langkah3.fiveWhy.map((w,i) => (<div key={i} className="p-3 border-l-4 border-indigo-500 bg-indigo-50">
-                        <p><strong>Why:</strong> {isEditing ? <input value={w.why} onChange={e => handleFieldChange(['langkah3', 'fiveWhy', i, 'why'], e.target.value)} className={`${commonInputClass} bg-white`} /> : w.why}</p>
-                        <p><strong>Because:</strong> {isEditing ? <input value={w.because} onChange={e => handleFieldChange(['langkah3', 'fiveWhy', i, 'because'], e.target.value)} className={`${commonInputClass} bg-white`} /> : w.because}</p>
-                    </div>))}
+            <StepCard title={QCC_STEPS[2]} actions={<ActionButtons onEdit={() => setIsLangkah3Editing(!isLangkah3Editing)} isEditing={isLangkah3Editing} screenshotId="qcc-step3-export" screenshotName="Langkah3_Analisa" />}>
+                <div id="qcc-step3-export" className="p-2 bg-white">
+                    <h4 className="font-semibold text-lg text-gray-800">Analisa Fishbone</h4>
+                     <div className="overflow-x-auto mt-2">
+                        <table className="w-full text-left text-sm border">
+                            <thead className="border-b bg-gray-50"><tr className="text-gray-600 uppercase">
+                                <th className="p-2 font-semibold border-r">Kategori</th><th className="p-2 font-semibold">Potensi Penyebab</th>
+                            </tr></thead>
+                            <tbody>
+                                {Object.entries(report.langkah3.fishbone).map(([category, causes]) => (
+                                    (causes as string[]).length > 0 && <tr key={category} className="border-b">
+                                        <td className="p-2 font-medium capitalize align-top border-r w-1/4">{category}</td>
+                                        <td className="p-2">
+                                            <ul className="list-disc list-inside space-y-1">
+                                                {(causes as string[]).map((cause, index) => (
+                                                    <li key={index}>
+                                                        {isLangkah3Editing ? <input type="text" value={cause} onChange={e => handleFieldChange(['langkah3', 'fishbone', category, index], e.target.value)} className={`${commonInputClass} w-full`} /> : cause}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <h4 className="font-semibold text-lg text-gray-800 mt-6">Analisis 5 Why</h4>
+                    <div className="space-y-2 mt-2">
+                        {report.langkah3.fiveWhy.map((w,i) => (<div key={i} className="p-3 border-l-4 border-indigo-500 bg-indigo-50">
+                            <p><strong>Why:</strong> {isLangkah3Editing ? <input value={w.why} onChange={e => handleFieldChange(['langkah3', 'fiveWhy', i, 'why'], e.target.value)} className={`${commonInputClass} bg-white`} /> : w.why}</p>
+                            <p><strong>Because:</strong> {isLangkah3Editing ? <input value={w.because} onChange={e => handleFieldChange(['langkah3', 'fiveWhy', i, 'because'], e.target.value)} className={`${commonInputClass} bg-white`} /> : w.because}</p>
+                        </div>))}
+                    </div>
+                    <h4 className="font-semibold text-lg text-gray-800 mt-4">Akar Permasalahan</h4>
+                    <EditableText value={report.langkah3.akarMasalah} onChange={e => handleFieldChange(['langkah3', 'akarMasalah'], e.target.value)} isEditing={isLangkah3Editing} className="font-medium mt-1 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md"/>
                 </div>
-                <h4 className="font-semibold text-lg text-gray-800 mt-4">Akar Permasalahan</h4>
-                <EditableText value={report.langkah3.akarMasalah} onChange={e => handleFieldChange(['langkah3', 'akarMasalah'], e.target.value)} isEditing={isEditing} className="font-medium mt-1 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md"/>
             </StepCard>
             
-            <StepCard title={QCC_STEPS[3]}>
+            <StepCard title={QCC_STEPS[3]} actions={<ActionButtons onEdit={() => setIsLangkah4Editing(!isLangkah4Editing)} isEditing={isLangkah4Editing} screenshotId="qcc-step4-export" screenshotName="Langkah4_Rencana" />}>
+              <div id="qcc-step4-export" className="p-2 bg-white">
                 <h4 className="font-semibold text-lg text-gray-800">Ide & Rencana Perbaikan</h4>
                 <table className="mt-2 w-full text-left">
                     <thead className="border-b border-gray-200"><tr className="text-sm text-gray-600 uppercase"><th className="p-2 font-semibold">Ide</th><th className="p-2 font-semibold">Deskripsi</th><th className="p-2 font-semibold">PJ</th></tr></thead>
                     <tbody>{report.langkah4.idePerbaikan.map((idea, i) => (<tr key={i} className="border-b border-gray-100">
-                        <td className="p-2">{isEditing ? <input value={idea.ide} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'ide'], e.target.value)} className={commonInputClass}/> : idea.ide}</td>
-                        <td className="p-2">{isEditing ? <input value={idea.deskripsi} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'deskripsi'], e.target.value)} className={commonInputClass}/> : idea.deskripsi}</td>
-                        <td className="p-2">{isEditing ? <input value={idea.penanggungJawab} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'penanggungJawab'], e.target.value)} className={commonInputClass}/> : idea.penanggungJawab}</td>
+                        <td className="p-2">{isLangkah4Editing ? <input value={idea.ide} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'ide'], e.target.value)} className={commonInputClass}/> : idea.ide}</td>
+                        <td className="p-2">{isLangkah4Editing ? <input value={idea.deskripsi} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'deskripsi'], e.target.value)} className={commonInputClass}/> : idea.deskripsi}</td>
+                        <td className="p-2">{isLangkah4Editing ? <input value={idea.penanggungJawab} onChange={e => handleFieldChange(['langkah4', 'idePerbaikan', i, 'penanggungJawab'], e.target.value)} className={commonInputClass}/> : idea.penanggungJawab}</td>
                     </tr>))}</tbody>
                 </table>
                 <h4 className="font-semibold text-lg text-gray-800 mt-4">Gantt Chart Rencana</h4>
                 <div id="gantt-chart-export" className="mt-2 p-2 rounded-lg"><GanttChartDisplay data={report.langkah4.ganttChart} /></div>
+              </div>
             </StepCard>
 
-            <StepCard title={QCC_STEPS[4]}>
-                <EditableText value={report.langkah5.implementasi} onChange={e => handleFieldChange(['langkah5', 'implementasi'], e.target.value)} isEditing={isEditing} isTextarea />
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <h4 className="font-semibold text-center mb-2">Sebelum Perbaikan</h4>
-                    <img src={report.langkah5.fotoSebelumUrl} alt="Sebelum Perbaikan" className="w-full h-auto rounded-lg border border-gray-200" />
-                    {isEditing && <input type="text" value={report.langkah5.fotoSebelumUrl} onChange={e => handleFieldChange(['langkah5', 'fotoSebelumUrl'], e.target.value)} className={`${commonInputClass} mt-2`} />}
-                </div>
-                <div>
-                    <h4 className="font-semibold text-center mb-2">Sesudah Perbaikan</h4>
-                    <img src={report.langkah5.fotoSesudahUrl} alt="Sesudah Perbaikan" className="w-full h-auto rounded-lg border border-gray-200" />
-                    {isEditing && <input type="text" value={report.langkah5.fotoSesudahUrl} onChange={e => handleFieldChange(['langkah5', 'fotoSesudahUrl'], e.target.value)} className={`${commonInputClass} mt-2`} />}
-                </div>
+            <StepCard title={QCC_STEPS[4]} actions={<ActionButtons onEdit={() => setIsLangkah5Editing(!isLangkah5Editing)} isEditing={isLangkah5Editing} screenshotId="qcc-step5-export" screenshotName="Langkah5_Implementasi" />}>
+                <div id="qcc-step5-export" className="p-2 bg-white">
+                  <EditableText value={report.langkah5.implementasi} onChange={e => handleFieldChange(['langkah5', 'implementasi'], e.target.value)} isEditing={isLangkah5Editing} isTextarea />
                 </div>
             </StepCard>
 
-            <StepCard title={QCC_STEPS[5]}>
-                <EditableText value={report.langkah6.evaluasi} onChange={e => handleFieldChange(['langkah6', 'evaluasi'], e.target.value)} isEditing={isEditing} isTextarea />
+            <StepCard title={QCC_STEPS[5]} actions={<ActionButtons onEdit={() => setIsLangkah6Editing(!isLangkah6Editing)} isEditing={isLangkah6Editing} screenshotId="qcc-step6-export" screenshotName="Langkah6_Evaluasi" />}>
+              <div id="qcc-step6-export" className="p-2 bg-white">
+                <EditableText value={report.langkah6.evaluasi} onChange={e => handleFieldChange(['langkah6', 'evaluasi'], e.target.value)} isEditing={isLangkah6Editing} isTextarea />
                 <div id="before-after-chart-export" className="mt-4 w-full h-80 bg-gray-50 p-4 rounded-lg"><BeforeAfterChart data={report.langkah6.dataPerbandingan} /></div>
+              </div>
             </StepCard>
 
-            <StepCard title={QCC_STEPS[6]}>
+            <StepCard title={QCC_STEPS[6]} actions={<ActionButtons onEdit={() => setIsLangkah7Editing(!isLangkah7Editing)} isEditing={isLangkah7Editing} screenshotId="qcc-step7-export" screenshotName="Langkah7_Standardisasi" />}>
+              <div id="qcc-step7-export" className="p-2 bg-white">
                 <h4 className="font-semibold text-lg text-gray-800">Standardisasi</h4>
                 <ul className="list-disc list-inside text-gray-700 mt-1 space-y-1">
                     {report.langkah7.standardisasi.map((s,i) => (<li key={i}>
-                        <strong>{isEditing ? <input value={s.dokumen} onChange={e => handleFieldChange(['langkah7', 'standardisasi', i, 'dokumen'], e.target.value)} className={commonInputClass}/> : `${s.dokumen}:`}</strong> 
-                        {isEditing ? <input value={s.deskripsi} onChange={e => handleFieldChange(['langkah7', 'standardisasi', i, 'deskripsi'], e.target.value)} className={commonInputClass}/> : ` ${s.deskripsi}`}
+                        <strong>{isLangkah7Editing ? <input value={s.dokumen} onChange={e => handleFieldChange(['langkah7', 'standardisasi', i, 'dokumen'], e.target.value)} className={commonInputClass}/> : `${s.dokumen}:`}</strong> 
+                        {isLangkah7Editing ? <input value={s.deskripsi} onChange={e => handleFieldChange(['langkah7', 'standardisasi', i, 'deskripsi'], e.target.value)} className={commonInputClass}/> : ` ${s.deskripsi}`}
                     </li>))}
                 </ul>
                 <h4 className="font-semibold text-lg text-gray-800 mt-4">Rencana Pencegahan</h4>
-                <EditableText value={report.langkah7.pencegahan} onChange={e => handleFieldChange(['langkah7', 'pencegahan'], e.target.value)} isEditing={isEditing} isTextarea />
+                <EditableText value={report.langkah7.pencegahan} onChange={e => handleFieldChange(['langkah7', 'pencegahan'], e.target.value)} isEditing={isLangkah7Editing} isTextarea />
                 <h4 className="font-semibold text-lg text-gray-800 mt-4">Horizontal Development</h4>
-                <EditableText value={report.langkah7.horizontalDevelopment} onChange={e => handleFieldChange(['langkah7', 'horizontalDevelopment'], e.target.value)} isEditing={isEditing} isTextarea />
+                <EditableText value={report.langkah7.horizontalDevelopment} onChange={e => handleFieldChange(['langkah7', 'horizontalDevelopment'], e.target.value)} isEditing={isLangkah7Editing} isTextarea />
+              </div>
             </StepCard>
 
-            <StepCard title={QCC_STEPS[7]}>
-                <EditableText value={report.langkah8.rencanaBerikutnya} onChange={e => handleFieldChange(['langkah8', 'rencanaBerikutnya'], e.target.value)} isEditing={isEditing} isTextarea />
+            <StepCard title={QCC_STEPS[7]} actions={<ActionButtons onEdit={() => setIsLangkah8Editing(!isLangkah8Editing)} isEditing={isLangkah8Editing} screenshotId="qcc-step8-export" screenshotName="Langkah8_Berikutnya" />}>
+                <div id="qcc-step8-export" className="p-2 bg-white">
+                  <EditableText value={report.langkah8.rencanaBerikutnya} onChange={e => handleFieldChange(['langkah8', 'rencanaBerikutnya'], e.target.value)} isEditing={isLangkah8Editing} isTextarea />
+                </div>
             </StepCard>
         </>
     );
@@ -387,8 +448,9 @@ const IPReportView: React.FC<{report: IPReport, onUpdateReport: (report: IPRepor
 };
 
 
-const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, generatorType, isEditing, onToggleEdit, onUpdateReport }) => {
+const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
 
   const isQCC = report.type === 'QCC';
 
@@ -402,41 +464,31 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, generatorType, is
     setIsExporting(false);
   };
 
-  const handleExportPPTX = async () => {
-    if (!isQCC) return;
-    setIsExporting(true);
-    await exportToPPTX(report as QCCReport);
-    setIsExporting(false);
-  };
-  
-  const handleExportWord = async () => {
+  const handleExportIPWord = async () => {
     if (report.type !== 'IP') return;
     setIsExporting(true);
     exportIPToWord(report as IPReport);
     setIsExporting(false);
   };
-
-  const handleFieldChange = (path, value) => {
-    const keys = Array.isArray(path) ? [...path] : path.split('.');
-    const newReport = JSON.parse(JSON.stringify(report)); // Deep clone
-    let current = newReport;
-    
-    for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
-    }
-    
-    current[keys[keys.length - 1]] = value;
-    onUpdateReport(newReport);
+  
+  const handleExportQCCWord = async () => {
+    if (report.type !== 'QCC') return;
+    setIsExporting(true);
+    exportQCCToWord(report as QCCReport);
+    setIsExporting(false);
   };
 
-  const commonInputClass = "w-full p-1 bg-gray-50 border border-gray-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200";
+  const handleTitleChange = (newTitle: string) => {
+      const newReport = { ...report, judul: newTitle };
+      onUpdateReport(newReport);
+  }
 
   const renderReportBody = () => {
     switch(report.type) {
         case 'QCC':
-            return <QCCReportView report={report} isEditing={isEditing} handleFieldChange={handleFieldChange} />;
+            return <QCCReportView report={report as QCCReport} onUpdateReport={onUpdateReport as (r: QCCReport) => void} />;
         case 'IP':
-            return <IPReportView report={report} onUpdateReport={onUpdateReport} />;
+            return <IPReportView report={report as IPReport} onUpdateReport={onUpdateReport as (r: IPReport) => void} />;
         default:
             return null;
     }
@@ -445,31 +497,30 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, generatorType, is
   return (
     <div id="report-container" className="space-y-6">
       <div className="bg-white p-8 rounded-2xl border border-gray-200">
-        {isEditing && isQCC ? (
-            <input type="text" value={(report as QCCReport).judul} onChange={e => handleFieldChange('judul', e.target.value)} className="text-3xl font-bold text-gray-900 w-full p-2 border border-indigo-300 rounded-md bg-indigo-50" />
-        ) : (
-            <h2 className="text-3xl font-bold text-gray-900">{report.judul}</h2>
-        )}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-600 border-t border-gray-200 pt-4">
-            {report.type === 'QCC' && <>
-                <InfoItem label="Tim" value={isEditing ? <input type="text" value={report.tim} onChange={e => handleFieldChange('tim', e.target.value)} className={commonInputClass} /> : report.tim} />
-                <InfoItem label="Lokasi" value={isEditing ? <input type="text" value={report.lokasi} onChange={e => handleFieldChange('lokasi', e.target.value)} className={commonInputClass} /> : report.lokasi} />
-                <InfoItem label="Tanggal" value={isEditing ? <input type="date" value={report.tanggal} onChange={e => handleFieldChange('tanggal', e.target.value)} className={commonInputClass} /> : report.tanggal} />
-            </>}
+        <div className="flex items-center gap-4">
+            {isTitleEditing ? (
+                <input type="text" value={report.judul} onChange={e => handleTitleChange(e.target.value)} className="text-3xl font-bold text-gray-900 w-full p-2 border border-indigo-300 rounded-md bg-indigo-50" />
+            ) : (
+                <h2 className="text-3xl font-bold text-gray-900">{report.judul}</h2>
+            )}
+            <button onClick={() => setIsTitleEditing(!isTitleEditing)} className="p-1.5 rounded-md hover:bg-gray-200 transition text-gray-500 flex-shrink-0" title={isTitleEditing ? "Simpan Judul" : "Ubah Judul"}>
+                {isTitleEditing ? <SaveIcon className="w-5 h-5"/> : <EditIcon className="w-5 h-5"/>}
+            </button>
         </div>
+        
         <div className="mt-6 flex flex-col sm:flex-row gap-4">
           <button 
             onClick={handleExportPDF} 
-            disabled={isExporting || (isEditing && isQCC)}
+            disabled={isExporting}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-red-200 text-red-600 bg-red-50 font-semibold rounded-lg hover:bg-red-100 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
-            title={isEditing && isQCC ? "Simpan perubahan sebelum mengekspor" : "Unduh Laporan PDF"}
+            title="Unduh Laporan PDF"
           >
             <PdfIcon className="w-5 h-5"/>
             {isExporting ? 'Mengekspor...' : 'Unduh PDF'}
           </button>
           {report.type === 'IP' && (
             <button 
-                onClick={handleExportWord}
+                onClick={handleExportIPWord}
                 disabled={isExporting}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-600 bg-blue-50 font-semibold rounded-lg hover:bg-blue-100 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
             >
@@ -478,27 +529,16 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, generatorType, is
             </button>
           )}
           {isQCC && (
-            <>
-                <button 
-                    onClick={handleExportPPTX}
-                    disabled={isExporting || isEditing} 
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-orange-200 text-orange-600 bg-orange-50 font-semibold rounded-lg hover:bg-orange-100 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
-                    title={isEditing ? "Simpan perubahan sebelum mengekspor" : ""}
-                >
-                    <PptIcon className="w-5 h-5" />
-                    {isExporting ? 'Mengekspor...' : 'Unduh PPTX'}
-                </button>
-                <button 
-                    onClick={onToggleEdit}
-                    disabled={isExporting} 
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                    {isEditing ? <><SaveIcon className="w-5 h-5" /><span>Simpan Perubahan</span></> : <><EditIcon className="w-5 h-5" /><span>Revisi Laporan</span></>}
-                </button>
-            </>
+            <button 
+                onClick={handleExportQCCWord}
+                disabled={isExporting} 
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-600 bg-blue-50 font-semibold rounded-lg hover:bg-blue-100 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+            >
+                <WordIcon className="w-5 h-5" />
+                {isExporting ? 'Mengekspor...' : 'Unduh Word'}
+            </button>
           )}
         </div>
-        {isEditing && isQCC && <p className="text-center text-sm text-indigo-700 mt-3">Mode Interaktif Aktif. Klik 'Simpan Perubahan' jika sudah selesai.</p>}
       </div>
       
       {renderReportBody()}

@@ -15,8 +15,7 @@
     "@google/genai": "^1.13.0",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "html2canvas": "^1.4.1",
-    "pptxgenjs": "^4.0.1"
+    "html2canvas": "^1.4.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

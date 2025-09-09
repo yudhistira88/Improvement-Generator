@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import PptxGenJS from 'pptxgenjs';
 import html2canvas from 'html2canvas';
 import { IPReport, QCCReport } from '../types';
 // FIX: Changed to a named import as QCC_STEPS is not a default export.
@@ -85,12 +84,7 @@ export const exportToPDF = async (report: QCCReport) => {
     doc.text(doc.splitTextToSize(report.judul, MAX_WIDTH), MARGIN, yPos + 10);
     yPos += 40;
 
-    doc.setFontSize(12).setFont('helvetica', 'normal');
-    addText(doc, `Tim: ${report.tim}`);
-    addText(doc, `Lokasi: ${report.lokasi}`);
-    addText(doc, `Tanggal: ${report.tanggal}`);
-
-    const addSection = async (title: string, contentGenerator: () => Promise<void>) => {
+    const addSection = async (title: string, contentGenerator: () => Promise<void> | void) => {
         doc.addPage();
         yPos = MARGIN;
         addTitle(doc, title);
@@ -98,7 +92,7 @@ export const exportToPDF = async (report: QCCReport) => {
     };
 
     // --- Step 1 ---
-    await addSection(QCC_STEPS[0], async () => {
+    await addSection(QCC_STEPS[0], () => {
         addSubTitle(doc, 'Latar Belakang');
         addText(doc, report.langkah1.latarBelakang);
         addSubTitle(doc, 'Kondisi Awal');
@@ -106,7 +100,7 @@ export const exportToPDF = async (report: QCCReport) => {
     });
 
     // --- Step 2 ---
-    await addSection(QCC_STEPS[1], async () => {
+    await addSection(QCC_STEPS[1], () => {
         addSubTitle(doc, 'Target Kuantitatif');
         autoTable(doc, {
             startY: yPos,
@@ -120,10 +114,24 @@ export const exportToPDF = async (report: QCCReport) => {
     });
 
     // --- Step 3 ---
-    await addSection(QCC_STEPS[2], async () => {
-        const fishboneImg = await captureElementAsImage('fishbone-diagram-export');
-        if (fishboneImg) doc.addImage(fishboneImg, 'PNG', MARGIN, yPos, 180, 80);
-        yPos += 90;
+    await addSection(QCC_STEPS[2], () => {
+        addSubTitle(doc, 'Analisa Fishbone');
+        Object.entries(report.langkah3.fishbone).forEach(([category, causes]) => {
+            if ((causes as string[]).length === 0) return;
+            checkPageBreak(doc, (causes.length + 1) * 6);
+            doc.setFontSize(12).setFont('helvetica', 'bold');
+            doc.text(category.charAt(0).toUpperCase() + category.slice(1), MARGIN, yPos);
+            yPos += 6;
+            doc.setFontSize(11).setFont('helvetica', 'normal');
+            (causes as string[]).forEach(cause => {
+                 const lines = doc.splitTextToSize(`- ${cause}`, MAX_WIDTH - 5);
+                 checkPageBreak(doc, lines.length * 5);
+                 doc.text(lines, MARGIN + 5, yPos);
+                 yPos += (lines.length * 5);
+            });
+            yPos += 3;
+        });
+        
         addSubTitle(doc, 'Analisis 5 Why & Akar Masalah');
         addText(doc, `Akar Masalah: ${report.langkah3.akarMasalah}`);
     });
@@ -139,26 +147,31 @@ export const exportToPDF = async (report: QCCReport) => {
         });
         yPos = (doc as any).lastAutoTable.finalY + 10;
         const ganttImg = await captureElementAsImage('gantt-chart-export');
-        if (ganttImg) doc.addImage(ganttImg, 'PNG', MARGIN, yPos, 180, 60);
-        yPos += 65;
+        if (ganttImg) {
+            checkPageBreak(doc, 65);
+            doc.addImage(ganttImg, 'PNG', MARGIN, yPos, 180, 60);
+            yPos += 65;
+        }
     });
     
     // --- Step 5 ---
-     await addSection(QCC_STEPS[4], async () => {
+     await addSection(QCC_STEPS[4], () => {
         addText(doc, report.langkah5.implementasi);
-        addText(doc, 'Dokumentasi visual sebelum dan sesudah perbaikan dapat dilihat pada file PPTX.');
     });
 
     // --- Step 6 ---
     await addSection(QCC_STEPS[5], async () => {
         addText(doc, report.langkah6.evaluasi);
         const chartImg = await captureElementAsImage('before-after-chart-export');
-        if (chartImg) doc.addImage(chartImg, 'PNG', MARGIN, yPos, 180, 90);
-        yPos += 95;
+        if (chartImg) {
+            checkPageBreak(doc, 95);
+            doc.addImage(chartImg, 'PNG', MARGIN, yPos, 180, 90);
+            yPos += 95;
+        }
     });
     
     // --- Step 7 ---
-    await addSection(QCC_STEPS[6], async () => {
+    await addSection(QCC_STEPS[6], () => {
         addSubTitle(doc, 'Standardisasi');
         report.langkah7.standardisasi.forEach(s => addText(doc, `- ${s.dokumen}: ${s.deskripsi}`));
         addSubTitle(doc, 'Rencana Pencegahan');
@@ -168,7 +181,7 @@ export const exportToPDF = async (report: QCCReport) => {
     });
 
     // --- Step 8 ---
-    await addSection(QCC_STEPS[7], async () => {
+    await addSection(QCC_STEPS[7], () => {
         addText(doc, report.langkah8.rencanaBerikutnya);
     });
 
@@ -393,105 +406,84 @@ export const exportIPToWord = (report: IPReport) => {
     document.body.removeChild(fileDownload);
 };
 
+// --- QCC WORD EXPORT ---
+export const exportQCCToWord = (report: QCCReport) => {
+    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+        <meta charset='utf-8'>
+        <title>Export QCC Report to Word</title>
+        <style>
+            @page { size: A4; margin: 2.5cm; }
+            body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
+            h1, h2, h3, h4 { font-family: 'Arial', sans-serif; color: #333; }
+            h1 { font-size: 20pt; text-align: center; margin-bottom: 2em; }
+            h2 { font-size: 16pt; margin-top: 1.5em; border-bottom: 2px solid #4F81BD; padding-bottom: 5px; }
+            h3 { font-size: 14pt; margin-top: 1.2em; color: #4F81BD; }
+            h4 { font-size: 12pt; font-style: italic; }
+            table { border-collapse: collapse; width: 100%; margin-top: 1em; margin-bottom: 1em; }
+            th, td { border: 1px solid #999; padding: 8px; text-align: left; vertical-align: top; }
+            th { background-color: #DCE6F1; font-weight: bold; }
+            ul, ol { padding-left: 20px; }
+            p { line-height: 1.5; text-align: justify; }
+        </style>
+    </head>
+    <body>`;
 
-// --- PPTX EXPORT REFACTORED ---
+    const footer = "</body></html>";
 
-export const exportToPPTX = async (report: QCCReport) => {
-    const pptx = new PptxGenJS();
-    pptx.layout = 'LAYOUT_WIDE'; // 16:9 layout
+    let content = `<h1>${report.judul}</h1>`;
 
-    const SLIDE_MARGIN = 0.5;
-    const SLIDE_WIDTH = pptx.presLayout.width - SLIDE_MARGIN * 2;
+    content += `<h2>1. ${QCC_STEPS[0]}</h2>
+                <h3>Latar Belakang</h3><p>${report.langkah1.latarBelakang}</p>
+                <h3>Kondisi Awal</h3><p>${report.langkah1.kondisiAwal}</p>`;
 
-    // Title Slide
-    let titleSlide = pptx.addSlide();
-    titleSlide.background = { color: 'F1F5F9' };
-    titleSlide.addText(report.judul, { x: SLIDE_MARGIN, y: 2.5, w: SLIDE_WIDTH, h: 1.5, fontSize: 36, bold: true, align: 'center', color: '0F172A' });
-    titleSlide.addText(`Tim: ${report.tim} | Lokasi: ${report.lokasi} | Tanggal: ${report.tanggal}`, { x: SLIDE_MARGIN, y: 4.2, w: SLIDE_WIDTH, h: 0.5, fontSize: 16, align: 'center', color: '475569' });
+    content += `<h2>2. ${QCC_STEPS[1]}</h2>
+                <h3>Target Kuantitatif</h3>
+                <table><thead><tr><th>Metrik</th><th>Baseline</th><th>Target</th></tr></thead>
+                <tbody>${report.langkah2.targetKuantitatif.map(t => `<tr><td>${t.metrik}</td><td>${t.baseline}</td><td>${t.target}</td></tr>`).join('')}</tbody></table>
+                <h3>Target Kualitatif</h3>
+                <ul>${report.langkah2.targetKualitatif.map(t => `<li>${t}</li>`).join('')}</ul>`;
 
-    const addContentSlide = (title: string, contentFn: (slide: PptxGenJS.Slide) => void | Promise<void>) => {
-        const slide = pptx.addSlide();
-        slide.addText(title, { x: SLIDE_MARGIN, y: 0.2, w: SLIDE_WIDTH, h: 0.75, fontSize: 24, bold: true, color: '00529B' });
-        // Add a separator line below the title
-        // Fix: The 'lineColor' and 'lineWidth' properties are incorrect. They should be nested within a 'line' object.
-slide.addShape(PptxGenJS.ShapeType.line, { x: SLIDE_MARGIN, y: 0.9, w: SLIDE_WIDTH, h: 0, line: { color: '00529B', width: 1 } });
-        return Promise.resolve(contentFn(slide));
-    };
-    
-    const textOptions = { x: SLIDE_MARGIN, y: 1.2, w: SLIDE_WIDTH, h: 5.8, fontSize: 14, autoFit: true };
+    content += `<h2>3. ${QCC_STEPS[2]}</h2>
+                <h3>Analisa Fishbone</h3>
+                ${Object.entries(report.langkah3.fishbone).map(([key, value]) => {
+                    if ((value as string[]).length === 0) return '';
+                    return `<h4>${key.charAt(0).toUpperCase() + key.slice(1)}</h4>
+                            <ul>${(value as string[]).map(item => `<li>${item}</li>`).join('')}</ul>`
+                }).join('')}
+                <h3>Analisis 5 Why</h3>
+                ${report.langkah3.fiveWhy.map(w => `<p><b>Why:</b> ${w.why}<br/><b>Because:</b> ${w.because}</p>`).join('')}
+                <h3>Akar Permasalahan</h3><p>${report.langkah3.akarMasalah}</p>`;
 
-    await addContentSlide(QCC_STEPS[0], (slide) => {
-        slide.addText([
-            { text: 'Latar Belakang:', options: { bold: true, fontSize: 16 } },
-            { text: `\n${report.langkah1.latarBelakang}\n`, options: { breakLine: true } },
-            { text: 'Kondisi Awal:', options: { bold: true, fontSize: 16 } },
-            { text: `\n${report.langkah1.kondisiAwal}` }
-        ], textOptions);
-    });
+    content += `<h2>4. ${QCC_STEPS[3]}</h2>
+                <h3>Ide & Rencana Perbaikan</h3>
+                <table><thead><tr><th>Ide</th><th>Deskripsi</th><th>PJ</th></tr></thead>
+                <tbody>${report.langkah4.idePerbaikan.map(idea => `<tr><td>${idea.ide}</td><td>${idea.deskripsi}</td><td>${idea.penanggungJawab}</td></tr>`).join('')}</tbody></table>
+                <h3>Gantt Chart Rencana</h3>
+                <table><thead><tr><th>Tugas</th><th>Mulai</th><th>Selesai</th><th>Durasi (Hari)</th></tr></thead>
+                <tbody>${report.langkah4.ganttChart.map(t => `<tr><td>${t.task}</td><td>${t.start}</td><td>${t.end}</td><td>${t.duration}</td></tr>`).join('')}</tbody></table>`;
 
-    await addContentSlide(QCC_STEPS[1], (slide) => {
-        const header = [
-            { text: 'Metrik', options: { bold: true, color: 'FFFFFF', fill: { color: '00529B' }, align: 'center' as const } }, 
-            { text: 'Baseline', options: { bold: true, color: 'FFFFFF', fill: { color: '00529B' }, align: 'center' as const } }, 
-            { text: 'Target', options: { bold: true, color: 'FFFFFF', fill: { color: '00529B' }, align: 'center' as const } }
-        ];
-        const body = report.langkah2.targetKuantitatif.map(t => [
-            { text: t.metrik },
-            { text: t.baseline },
-            { text: t.target },
-        ]);
-        const tableData = [header, ...body];
-        slide.addTable(tableData, { x: 0.5, y: 1.2, w: 9, autoPage: true, rowH: 0.4 });
-    });
+    content += `<h2>5. ${QCC_STEPS[4]}</h2><p>${report.langkah5.implementasi}</p>`;
 
-    await addContentSlide(QCC_STEPS[2], async (slide) => {
-         const fishboneImg = await captureElementAsImage('fishbone-diagram-export');
-         if(fishboneImg) slide.addImage({ data: fishboneImg, x: SLIDE_MARGIN, y: 1.2, w: 9, h: 5, sizing: { type: 'contain', w: 9, h: 5 } });
-    });
+    content += `<h2>6. ${QCC_STEPS[5]}</h2>
+                <p>${report.langkah6.evaluasi}</p>
+                <h3>Data Perbandingan</h3>
+                <table><thead><tr><th>Nama</th><th>Sebelum</th><th>Sesudah</th><th>Unit</th></tr></thead>
+                <tbody>${report.langkah6.dataPerbandingan.map(d => `<tr><td>${d.name}</td><td>${d.sebelum}</td><td>${d.sesudah}</td><td>${d.unit}</td></tr>`).join('')}</tbody></table>`;
 
-    await addContentSlide(QCC_STEPS[3], async (slide) => {
-        const ganttImg = await captureElementAsImage('gantt-chart-export');
-        if(ganttImg) slide.addImage({ data: ganttImg, x: SLIDE_MARGIN, y: 1.2, w: 9, h: 5, sizing: { type: 'contain', w: 9, h: 5 } });
-    });
+    content += `<h2>7. ${QCC_STEPS[6]}</h2>
+                <h3>Standardisasi</h3>
+                <ul>${report.langkah7.standardisasi.map(s => `<li><b>${s.dokumen}:</b> ${s.deskripsi}</li>`).join('')}</ul>
+                <h3>Rencana Pencegahan</h3><p>${report.langkah7.pencegahan}</p>
+                <h3>Horizontal Development</h3><p>${report.langkah7.horizontalDevelopment}</p>`;
 
-    await addContentSlide(QCC_STEPS[4], async (slide) => {
-        slide.addText(report.langkah5.implementasi, { x:SLIDE_MARGIN, y: 1.2, w:SLIDE_WIDTH, h: 1.5, fontSize:14, autoFit:true});
-        
-        const beforeImgBase64 = await imageUrlToBase64(report.langkah5.fotoSebelumUrl);
-        if (beforeImgBase64) {
-          slide.addImage({ data: beforeImgBase64, x: 0.5, y: 3, w: 4.2, h: 3.2, sizing: { type: 'cover', w: 4.2, h: 3.2 } });
-        }
-        slide.addText('Sebelum', { x: 0.5, y: 6.2, w: 4.2, align: 'center', bold: true});
+    content += `<h2>8. ${QCC_STEPS[7]}</h2><p>${report.langkah8.rencanaBerikutnya}</p>`;
 
-        const afterImgBase64 = await imageUrlToBase64(report.langkah5.fotoSesudahUrl);
-        if (afterImgBase64) {
-          slide.addImage({ data: afterImgBase64, x: 5.3, y: 3, w: 4.2, h: 3.2, sizing: { type: 'cover', w: 4.2, h: 3.2 } });
-        }
-        slide.addText('Sesudah', { x: 5.3, y: 6.2, w: 4.2, align: 'center', bold: true});
-    });
-    
-    await addContentSlide(QCC_STEPS[5], async (slide) => {
-        slide.addText(report.langkah6.evaluasi, { x:SLIDE_MARGIN, y: 1.2, w:SLIDE_WIDTH, h: 1.2, fontSize:14, autoFit:true});
-        const chartImg = await captureElementAsImage('before-after-chart-export');
-        if (chartImg) {
-          slide.addImage({ data: chartImg, x: SLIDE_MARGIN, y: 2.5, w: 9, h: 4, sizing: { type: 'contain', w: 9, h: 4 } });
-        }
-    });
-    
-    await addContentSlide(QCC_STEPS[6], (slide) => {
-         slide.addText([
-            { text: 'Standardisasi:', options: { bold: true, fontSize: 16 } },
-            ...report.langkah7.standardisasi.flatMap(s => [{text: `\n• ${s.dokumen}: ${s.deskripsi}`}]),
-            { text: '\n\nRencana Pencegahan:', options: { bold: true, fontSize: 16, breakLine: true } },
-            { text: `\n${report.langkah7.pencegahan}` },
-            { text: '\n\nHorizontal Development:', options: { bold: true, fontSize: 16, breakLine: true } },
-            { text: `\n${report.langkah7.horizontalDevelopment}` }
-        ], textOptions);
-    });
-
-    await addContentSlide(QCC_STEPS[7], (slide) => {
-        slide.addText(report.langkah8.rencanaBerikutnya, textOptions);
-    });
-
-    pptx.writeFile({ fileName: `${report.judul.replace(/\s/g, '_')}.pptx` });
+    const source = header + content + footer;
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(source);
+    fileDownload.download = `QCC_${report.judul.replace(/\s/g, '_')}.doc`;
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
 };

@@ -14,6 +14,9 @@ interface FishboneDiagramProps {
 }
 
 const FishboneDiagram: React.FC<FishboneDiagramProps> = ({ data }) => {
+  // NOTE: This component is no longer in active use for QCC reports as of the latest UI update,
+  // which replaced this visual diagram with a table for clarity.
+  
   // FIX: Dynamically construct the list of categories based on the provided data to avoid errors when a category is missing.
   const categories = [
     { name: 'Manusia', items: data.manusia },

@@ -25,9 +25,6 @@ const qccReportSchema = {
     properties: {
         type: { type: Type.STRING, enum: ['QCC']},
         judul: { type: Type.STRING, description: "Judul tema QCC yang menarik dan jelas." },
-        tim: { type: Type.STRING, description: "Nama tim QCC." },
-        lokasi: { type: Type.STRING, description: "Lokasi departemen/area tempat QCC dilakukan." },
-        tanggal: { type: Type.STRING, description: "Tanggal pembuatan laporan dalam format YYYY-MM-DD." },
         langkah1: {
             type: Type.OBJECT,
             properties: {
@@ -127,10 +124,8 @@ const qccReportSchema = {
             properties: {
                 judul: { type: Type.STRING, description: "Judul untuk Langkah 5: Implementasi Rencana Perbaikan" },
                 implementasi: { type: Type.STRING, description: "Narasi detail tentang bagaimana perbaikan diimplementasikan." },
-                fotoSebelumUrl: { type: Type.STRING, description: "URL placeholder dari picsum.photos untuk foto sebelum perbaikan." },
-                fotoSesudahUrl: { type: Type.STRING, description: "URL placeholder dari picsum.photos untuk foto sesudah perbaikan." }
             },
-            required: ["judul", "implementasi", "fotoSebelumUrl", "fotoSesudahUrl"]
+            required: ["judul", "implementasi"]
         },
         langkah6: {
             type: Type.OBJECT,
@@ -182,7 +177,7 @@ const qccReportSchema = {
             required: ["judul", "rencanaBerikutnya"]
         }
     },
-    required: ["type", "judul", "tim", "lokasi", "tanggal", "langkah1", "langkah2", "langkah3", "langkah4", "langkah5", "langkah6", "langkah7", "langkah8"]
+    required: ["type", "judul", "langkah1", "langkah2", "langkah3", "langkah4", "langkah5", "langkah6", "langkah7", "langkah8"]
 };
 const ipReportSchema = {
     type: Type.OBJECT,
@@ -354,12 +349,12 @@ const getQCCPrompt = (params: ReportGenerationParams) => {
     2.  **Langkah 2: Target**: Rumuskan target SMART (kuantitatif dan kualitatif).
     3.  **Langkah 3: Analisa Masalah**: Buat Fishbone Diagram (minimal 2 penyebab per kategori) dan analisis 5 Why yang logis hingga ke akar masalah.
     4.  **Langkah 4: Ide & Rencana Perbaikan**: Hasilkan ide perbaikan konkret dan buat Gantt Chart realistis.
-    5.  **Langkah 5: Implementasi**: Narasi detail implementasi. Gunakan URL placeholder dari 'https://picsum.photos/400/300?random=1' dan 'https://picsum.photos/400/300?random=2' untuk foto.
+    5.  **Langkah 5: Implementasi**: Narasi detail implementasi. JANGAN menyertakan foto atau URL gambar.
     6.  **Langkah 6: Evaluasi**: Bandingkan hasil dengan target secara kuantitatif.
     7.  **Langkah 7: Standardisasi**: Sebutkan dokumen standar baru, rencana pencegahan, dan rencana pengembangan horizontal.
     8.  **Langkah 8: Rencana Selanjutnya**: Berikan pandangan strategis untuk perbaikan berikutnya.
 
-    Output HARUS berupa satu objek JSON valid tanpa markdown, sesuai skema yang diberikan.
+    Output HARUS berupa satu objek JSON valid tanpa markdown, sesuai skema yang diberikan. Jangan sertakan properti seperti 'tim', 'lokasi', atau 'tanggal'.
     `;
 }
 

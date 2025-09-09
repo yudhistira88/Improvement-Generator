@@ -20,9 +20,6 @@ export interface ReportGenerationParams {
 export interface QCCReport {
   type: 'QCC';
   judul: string;
-  tim: string;
-  lokasi: string;
-  tanggal: string; // YYYY-MM-DD
   langkah1: {
     judul: string;
     latarBelakang: string;
@@ -54,8 +51,6 @@ export interface QCCReport {
   langkah5: {
     judul: string;
     implementasi: string;
-    fotoSebelumUrl: string;
-    fotoSesudahUrl: string;
   };
   langkah6: {
     judul: string;
