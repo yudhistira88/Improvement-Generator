@@ -8,6 +8,7 @@ import { SparklesIcon } from './components/icons';
 import Flowchart from './components/Flowchart';
 import GeneratorSelector from './components/GeneratorSelector';
 import LoginPage from './components/LoginPage';
+import SuccessPopup from './components/SuccessPopup';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -15,6 +16,7 @@ const App: React.FC = () => {
   const [reportData, setReportData] = useState<AnyReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState<boolean>(false);
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
@@ -38,6 +40,7 @@ const App: React.FC = () => {
     try {
       const report = await generateReport(generatorType, params);
       setReportData(report);
+      setShowSuccessPopup(true);
     } catch (err) {
       console.error(err);
       setError('Gagal menghasilkan laporan. Silakan coba lagi.');
@@ -65,6 +68,8 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
       <Header generatorType={generatorType} onBack={handleBackToSelection} onLogout={handleLogout} />
       
+      {showSuccessPopup && <SuccessPopup onClose={() => setShowSuccessPopup(false)} />}
+
       {!generatorType ? (
         <GeneratorSelector onSelectGenerator={setGeneratorType} />
       ) : (
