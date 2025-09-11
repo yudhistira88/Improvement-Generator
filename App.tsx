@@ -9,6 +9,7 @@ import Flowchart from './components/Flowchart';
 import GeneratorSelector from './components/GeneratorSelector';
 import LoginPage from './components/LoginPage';
 import SuccessPopup from './components/SuccessPopup';
+import Notification from './components/Notification';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState<boolean>(false);
+  const [notification, setNotification] = useState<string | null>(null);
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
@@ -69,6 +71,7 @@ const App: React.FC = () => {
       <Header generatorType={generatorType} onBack={handleBackToSelection} onLogout={handleLogout} />
       
       {showSuccessPopup && <SuccessPopup onClose={() => setShowSuccessPopup(false)} />}
+      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
 
       {!generatorType ? (
         <GeneratorSelector onSelectGenerator={setGeneratorType} />
@@ -99,6 +102,7 @@ const App: React.FC = () => {
               <ReportDisplay 
                 report={reportData} 
                 onUpdateReport={handleReportUpdate}
+                showNotification={setNotification}
               />
             </div>
           )}

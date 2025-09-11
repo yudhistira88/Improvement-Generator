@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { AnyReport, GeneratorType, IPReport, QCCReport } from '../types';
 import { exportToPDF, exportQCCToWord, exportIPToPDF, exportIPToWord } from '../services/exportService';
+import { exportIPToPPT, exportQCCToPPT, PresentationStyle } from '../services/pptService';
+import PptStyleModal from './PptStyleModal';
 import StepCard from './StepCard';
 import { QCC_STEPS, IP_STEPS } from '../constants';
 import BeforeAfterChart from './charts/BeforeAfterChart';
 import GanttChartDisplay from './charts/GanttChartDisplay';
-import { PdfIcon, EditIcon, SaveIcon, WordIcon, CameraIcon } from './icons';
+import { PdfIcon, EditIcon, SaveIcon, WordIcon, CameraIcon, PptIcon } from './icons';
 import html2canvas from 'html2canvas';
 
 interface ReportDisplayProps {
   report: AnyReport;
   onUpdateReport: (report: AnyReport) => void;
+  showNotification: (message: string) => void;
 }
 
 const EditableText = ({ value, onChange, isEditing, isTextarea = false, className = '' }) => {
@@ -448,9 +451,10 @@ const IPReportView: React.FC<{report: IPReport, onUpdateReport: (report: IPRepor
 };
 
 
-const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport }) => {
+const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport, showNotification }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [isPptModalOpen, setIsPptModalOpen] = useState(false);
 
   const isQCC = report.type === 'QCC';
 
@@ -476,6 +480,24 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport })
     setIsExporting(true);
     exportQCCToWord(report as QCCReport);
     setIsExporting(false);
+  };
+
+  const handleGeneratePPT = async (style: PresentationStyle) => {
+    setIsPptModalOpen(false);
+    setIsExporting(true);
+    try {
+        if (report.type === 'IP') {
+            await exportIPToPPT(report as IPReport, style);
+        } else if (report.type === 'QCC') {
+            await exportQCCToPPT(report as QCCReport, style);
+        }
+        showNotification("Presentasi berhasil dibuat!");
+    } catch (error) {
+        console.error("Gagal membuat presentasi:", error);
+        showNotification("Gagal membuat presentasi. Cek konsol untuk detail.");
+    } finally {
+        setIsExporting(false);
+    }
   };
 
   const handleTitleChange = (newTitle: string) => {
@@ -518,7 +540,18 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport })
             <PdfIcon className="w-5 h-5"/>
             {isExporting ? 'Mengekspor...' : 'Unduh PDF'}
           </button>
-          {report.type === 'IP' && (
+          
+          <button 
+            onClick={() => setIsPptModalOpen(true)}
+            disabled={isExporting}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-green-200 text-green-700 bg-green-50 font-semibold rounded-xl hover:bg-green-100 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+            title="Buat Presentasi PPT"
+          >
+            <PptIcon className="w-5 h-5"/>
+            {isExporting ? 'Mengekspor...' : 'Buat PPT'}
+          </button>
+
+          {report.type === 'IP' ? (
             <button 
                 onClick={handleExportIPWord}
                 disabled={isExporting}
@@ -527,8 +560,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport })
                 <WordIcon className="w-5 h-5" />
                 {isExporting ? 'Mengekspor...' : 'Unduh Word'}
             </button>
-          )}
-          {isQCC && (
+          ) : ( // isQCC
             <button 
                 onClick={handleExportQCCWord}
                 disabled={isExporting} 
@@ -542,6 +574,13 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({ report, onUpdateReport })
       </div>
       
       {renderReportBody()}
+
+      {isPptModalOpen && (
+        <PptStyleModal
+            onClose={() => setIsPptModalOpen(false)}
+            onGenerate={handleGeneratePPT}
+        />
+      )}
 
     </div>
   );
