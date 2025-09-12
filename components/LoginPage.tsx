@@ -20,7 +20,6 @@ const validCredentials = [
   { username: 'puji', password: 'musthofa*2025' },
   { username: 'clarice', password: 'vilodia!!' },
   { username: 'Dedy.hd', password: 'Honda2025' },
-  { username: 'Oi', password: 'Oi' },
   { username: 'dwi.hm', password: 'dwi.hm' },
   { username: 'Rannityas', password: '=Kinantie07=' },
 ];
