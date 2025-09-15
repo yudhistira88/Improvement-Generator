@@ -34,10 +34,10 @@ const SuccessPopup: React.FC<SuccessPopupProps> = ({ onClose }) => {
       >
         <div className="text-center">
             <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl leading-6 font-bold text-gray-900">Alhamdu'lillah!</h3>
+            <h3 className="text-xl leading-6 font-bold text-gray-900">Laporan Berhasil Dibuat</h3>
             <div className="mt-4 px-7 py-3">
                 <p className="text-base text-gray-600">
-                    Data Improvement Berhasil dibuat. Jangan lupa traktir Kopinya ya!!! :)
+                    Data Improvement Berhasil dibuat. Silahkan di review kembali hasil yang telah dibuat. Lanjut Unduh PDF, Word atau bisa Buat langsung File PPT. Semangat Berkarya Tim GA Supporting!!!
                 </p>
             </div>
             <div className="items-center px-4 py-3">
