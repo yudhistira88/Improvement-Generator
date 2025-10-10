@@ -29,7 +29,14 @@ const EditableText = ({ value, onChange, isEditing, isTextarea = false, classNam
     return <p className={`text-gray-700 mt-1 ${className}`}>{value}</p>;
 };
 
-const Section = ({ title, children, className = '' }) => (
+// FIX: Added explicit types for the Section component props to resolve type inference issues.
+interface SectionProps {
+    title: string;
+    children: React.ReactNode;
+    className?: string;
+}
+
+const Section: React.FC<SectionProps> = ({ title, children, className = '' }) => (
     <div className={className}>
         <h4 className="font-semibold text-lg text-gray-800">{title}</h4>
         <div className="mt-2 text-gray-700 space-y-2">{children}</div>
